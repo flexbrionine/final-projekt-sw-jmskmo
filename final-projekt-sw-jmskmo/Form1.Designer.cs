@@ -25,6 +25,7 @@
         private void InitializeComponent() {
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.richTextBox_main = new System.Windows.Forms.RichTextBox();
             this.richTextBox_usr = new System.Windows.Forms.RichTextBox();
             this.richTextBox_data = new System.Windows.Forms.RichTextBox();
             this.label_objectCount = new System.Windows.Forms.Label();
@@ -40,7 +41,7 @@
             this.pictureBox_main = new System.Windows.Forms.PictureBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.richTextBox_info = new System.Windows.Forms.RichTextBox();
-            this.richTextBox_main = new System.Windows.Forms.RichTextBox();
+            this.richTextBox_sasiady = new System.Windows.Forms.RichTextBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_b)).BeginInit();
@@ -63,6 +64,7 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.richTextBox_sasiady);
             this.tabPage1.Controls.Add(this.richTextBox_main);
             this.tabPage1.Controls.Add(this.richTextBox_usr);
             this.tabPage1.Controls.Add(this.richTextBox_data);
@@ -85,14 +87,25 @@
             this.tabPage1.Text = "tabPage1";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
+            // richTextBox_main
+            // 
+            this.richTextBox_main.BackColor = System.Drawing.SystemColors.Window;
+            this.richTextBox_main.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.richTextBox_main.Font = new System.Drawing.Font("JetBrains Mono", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.richTextBox_main.Location = new System.Drawing.Point(814, 420);
+            this.richTextBox_main.Name = "richTextBox_main";
+            this.richTextBox_main.Size = new System.Drawing.Size(168, 111);
+            this.richTextBox_main.TabIndex = 14;
+            this.richTextBox_main.Text = "";
+            // 
             // richTextBox_usr
             // 
             this.richTextBox_usr.BackColor = System.Drawing.SystemColors.Window;
             this.richTextBox_usr.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.richTextBox_usr.Font = new System.Drawing.Font("JetBrains Mono", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.richTextBox_usr.Location = new System.Drawing.Point(814, 315);
+            this.richTextBox_usr.Location = new System.Drawing.Point(817, 304);
             this.richTextBox_usr.Name = "richTextBox_usr";
-            this.richTextBox_usr.Size = new System.Drawing.Size(168, 140);
+            this.richTextBox_usr.Size = new System.Drawing.Size(168, 110);
             this.richTextBox_usr.TabIndex = 13;
             this.richTextBox_usr.Text = "";
             // 
@@ -103,7 +116,7 @@
             this.richTextBox_data.Font = new System.Drawing.Font("JetBrains Mono", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.richTextBox_data.Location = new System.Drawing.Point(814, 250);
             this.richTextBox_data.Name = "richTextBox_data";
-            this.richTextBox_data.Size = new System.Drawing.Size(168, 59);
+            this.richTextBox_data.Size = new System.Drawing.Size(168, 48);
             this.richTextBox_data.TabIndex = 12;
             this.richTextBox_data.Text = "";
             // 
@@ -265,16 +278,16 @@
             this.richTextBox_info.TabIndex = 15;
             this.richTextBox_info.Text = "";
             // 
-            // richTextBox_main
+            // richTextBox_sasiady
             // 
-            this.richTextBox_main.BackColor = System.Drawing.SystemColors.Window;
-            this.richTextBox_main.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.richTextBox_main.Font = new System.Drawing.Font("JetBrains Mono", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.richTextBox_main.Location = new System.Drawing.Point(817, 461);
-            this.richTextBox_main.Name = "richTextBox_main";
-            this.richTextBox_main.Size = new System.Drawing.Size(168, 180);
-            this.richTextBox_main.TabIndex = 14;
-            this.richTextBox_main.Text = "";
+            this.richTextBox_sasiady.BackColor = System.Drawing.SystemColors.Window;
+            this.richTextBox_sasiady.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.richTextBox_sasiady.Font = new System.Drawing.Font("JetBrains Mono", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.richTextBox_sasiady.Location = new System.Drawing.Point(814, 537);
+            this.richTextBox_sasiady.Name = "richTextBox_sasiady";
+            this.richTextBox_sasiady.Size = new System.Drawing.Size(168, 104);
+            this.richTextBox_sasiady.TabIndex = 15;
+            this.richTextBox_sasiady.Text = "";
             // 
             // Form1
             // 
@@ -316,6 +329,7 @@
         private System.Windows.Forms.RichTextBox richTextBox_usr;
         private System.Windows.Forms.RichTextBox richTextBox_info;
         private System.Windows.Forms.RichTextBox richTextBox_main;
+        private System.Windows.Forms.RichTextBox richTextBox_sasiady;
     }
 }
 

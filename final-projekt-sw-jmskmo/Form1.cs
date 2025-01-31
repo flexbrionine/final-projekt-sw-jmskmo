@@ -1,12 +1,12 @@
-﻿using Emgu.CV;
-using Emgu.CV.Dnn;
+﻿//#define RUNTIME // comment for DEBUG MODE
+
+using Emgu.CV;
 using Emgu.CV.Structure;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace final_projekt_sw_jmskmo {
     public partial class Form1 : Form {
@@ -15,6 +15,9 @@ namespace final_projekt_sw_jmskmo {
         bool updateColorInt = false;
         int elements = 0;
         byte tone = 0;
+        int a = 0, s = 0, aa = 0, fe = 0;
+        int dlugosc = 0, dlugosc_dyskr = 0;
+        double gupSize = 0.0;
         Image<Bgr, byte> image1, linedImage;
         Image<Bgr, byte> originalImage;
         OpenFileDialog fileDialog = new OpenFileDialog();
@@ -28,6 +31,20 @@ namespace final_projekt_sw_jmskmo {
 
         List<double> element_size = new List<double>();
         List<double> element_empty = new List<double>();
+
+        List<int> element_naibour = new List<int>();
+
+        //public struct elementNaibour {
+        //    public elementNaibour(List<int> elementID, List<int> naibourID)
+        //    {
+        //        element = elementID;
+        //        naibour = naibourID;
+        //    }    
+
+        //    public List<int> element { get; }
+        //    public List<int> naibour { get; }
+        //}
+
         public Form1() {
             InitializeComponent();
             image1 = new Image<Bgr, byte>(800, 600);
@@ -75,13 +92,9 @@ namespace final_projekt_sw_jmskmo {
             byte[,,] temp;
             temp = image1.Data;
 
-            //for (int i = 0; i < image1.Width; i++) {
-            //    for (int j = 0; j < image1.Height; j++) {
             numericUpDown_b.Value = temp[y, x, 0];
             numericUpDown_g.Value = temp[y, x, 1];
             numericUpDown_r.Value = temp[y, x, 2];
-            //    }
-            //}
         }
         private bool ifFoundSelectedPixelColor(byte[,,] tempImage, int x, int y) {
             if (tempImage[y, x, 0] == numericUpDown_b.Value &&
@@ -179,7 +192,7 @@ namespace final_projekt_sw_jmskmo {
             pictureBox_main.Image = image1.Bitmap;
         }
 
-        int[] w_number = { 0, 0, 0, 0, 0, 0, 0 }; //Max layer count: 7
+        int[] w_number = { 0, 0, 0, 0, 0, 0, 0 }; //!Max layer count: 7
         private void showData() {
             richTextBox_data.Clear();
             richTextBox_data.Text = string.Empty;
@@ -214,7 +227,7 @@ namespace final_projekt_sw_jmskmo {
                     1
                 );
             }
-            
+
             for (int i = 0; i <= elementData_max_y_dist.Count - 1; i++) {
                 richTextBox_usr.AppendText(String.Format("W{0} elem: {1} pcs\n", i, w_number[i]));
             }
@@ -228,20 +241,33 @@ namespace final_projekt_sw_jmskmo {
             return elemCount;
         }
 
-        int a = 0;
+        private int descretize(int dlugosc) {
+            switch (dlugosc) {
+                case 147: return 1;
+                case 197: return 2;
+                case 247: return 3;
+                default: return 0;
+            }
+        }
+
         private void showInfo() {
             richTextBox_info.Clear();
             richTextBox_info.Text = string.Empty;
+
             richTextBox_main.Clear();
             richTextBox_main.Text = string.Empty;
 
-            for (int i = 0; i < elements; i++) {
-                //for every element
+            richTextBox_sasiady.Clear();
+            richTextBox_sasiady.Text = string.Empty;
+
+            byte[,,] temp_data;
+            temp_data = image1.Data;
+
+            for (int i = 0; i < elements; i++) { //for every element
                 element_size.Add(Math.Sqrt(
                     Math.Pow((elementData_max_x[i] - elementData_min_x[i]), 2) +
                     Math.Pow((elementData_max_y[i] - elementData_min_y[i]), 2)
                 ));
-
                 richTextBox_info.AppendText(String.Format("Size of {0} elem: {1}\n", i, (int)element_size[i]));
             }
 
@@ -249,21 +275,13 @@ namespace final_projekt_sw_jmskmo {
                 if (w_number[layer] > 1) { //layer with 2 or more elements
                     a = firstElementOfLayer(layer);
                     for (int i = 0; i < w_number[layer] - 1; i++) {
-                        richTextBox_info.AppendText(String.Format("{0} ",i
-                            //Math.Pow((elementData_max_x[a + 1 + i] - elementData_min_x[a + i]), 2)
-                            //elementData_max_x[a - 1]
-                            //firstElementOfLayer(layer)
-
-
-                        ));
-
-
-                        double gupSize = Math.Sqrt(Math.Pow((elementData_max_x[a + i] - elementData_min_x[a + i + 1]), 2) + Math.Pow((elementData_max_y[a + i] - elementData_min_y[a + i + 1]), 2));
+                        gupSize = Math.Sqrt(Math.Pow((elementData_max_x[a + i] - elementData_min_x[a + i + 1]), 2) + Math.Pow((elementData_max_y[a + i] - elementData_min_y[a + i + 1]), 2));
+#if !RUNTIME
                         if (gupSize >= 80) {
                             CvInvoke.PutText(
                                 image1,
                                 String.Format("g:{0}", (int)gupSize),
-                                new Point(elementData_max_x[a + i], elementData_min_y[a + i] + (elementData_max_y[a + i] - elementData_min_y[a + i + 1])/2),
+                                new Point(elementData_max_x[a + i], elementData_min_y[a + i] + (elementData_max_y[a + i] - elementData_min_y[a + i + 1]) / 2),
                                 Emgu.CV.CvEnum.FontFace.HersheyDuplex,
                                 1,
                                 new MCvScalar(0, 100, 255),
@@ -271,20 +289,104 @@ namespace final_projekt_sw_jmskmo {
                             );
                             CvInvoke.Line(
                                 image1,
-                                //new Point(elementData_min_x[a + i], elementData_min_y[a + i]),
-                                //new Point(elementData_max_x[a + i], elementData_max_y[a + i]),
                                 new Point(elementData_max_x[a + i], elementData_max_y[a + i]),
                                 new Point(elementData_min_x[a + i + 1], elementData_min_y[a + i + 1]),
                                 new MCvScalar(0, 100, 255),
                                 1
                             );
                         }
-
+#endif
                     }
                     richTextBox_info.AppendText("\n");
                 }
+
+                /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //                                              ELEMENTY I POWIETRZE                                           //
+                /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                richTextBox_main.AppendText(String.Format("W{0}: (", layer));
+                s = firstElementOfLayer(layer);
+                for (int i = 0; i < w_number[layer] - 1; i++) {
+                    //--------------------- K bez ostatniego
+                    richTextBox_main.AppendText("K");
+                    dlugosc = elementData_max_x[s + i] - elementData_min_x[s + i];
+                    richTextBox_main.AppendText(String.Format("{0},", descretize(dlugosc)));
+                    //--------------------- P
+                    gupSize = Math.Sqrt(Math.Pow((elementData_max_x[s + i] - elementData_min_x[s + i + 1]), 2) + Math.Pow((elementData_max_y[s + i] - elementData_min_y[s + i + 1]), 2));
+                    if (gupSize >= 100) {
+                        richTextBox_main.AppendText("P,");
+                    }
+                }
+                //--------------------- K ostatni
+                richTextBox_main.AppendText("K");
+                dlugosc = elementData_max_x[s + w_number[layer] - 1] - elementData_min_x[s + w_number[layer] - 1];
+                richTextBox_main.AppendText(String.Format("{0},", descretize(dlugosc)));
+
+                richTextBox_main.Text = richTextBox_main.Text.Substring(0, richTextBox_main.Text.Length - 1);
+                richTextBox_main.AppendText(")");
+                richTextBox_main.AppendText("\n");
             }
-            //richTextBox_info.AppendText(String.Format("{0}", elementData_max_y_dist[0]));
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //                                              SASIADSTWO ELEMENTOW                                           //
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            //Image<Bgr, byte> swap = new Image<Bgr, byte>(800, 600);
+            //swap = image1;
+            //temp_data = swap.Data;
+            //List<int> element_temp = new List<int>();
+            List<int> naibour_temp = new List<int>();
+            //elementNaibour en = new elementNaibour();
+
+
+
+            // program zadziala tylko jesli masz 32 Gb RAM
+            List<int>[] dataset = { new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), };
+
+            //for (int layer = 0; layer < 2; layer++) {
+            //    dataset[layer].Add('1');
+            //}
+
+            for (int layer = 0; layer < elementData_max_y_dist.Count; layer++) {
+                fe = firstElementOfLayer(layer);
+                for (int i = 0; i < w_number[layer]; i++) { // dla kazdego elementu z danej warstwy
+                    for (int line = 0; line < 10; line++) { // max 11 lines per element
+                        if (elementData_min_x[fe + i] + line * 30 < elementData_max_x[fe + i]) { // jezeli nie wychodzi poza zakres
+#if !RUNTIME
+                            CvInvoke.Line(
+                                image1,
+                                new Point(elementData_min_x[fe + i] + line * 30, elementData_max_y[fe + i]),
+                                new Point(elementData_min_x[fe + i] + line * 30, elementData_max_y[fe + i] + 20),
+                                new MCvScalar(120, 80, 210),
+                                1
+                            );
+#endif
+                            //richTextBox_sasiady.AppendText(String.Format("_{0}-", temp_data[elementData_max_y[fe + i],
+                            //                                                                elementData_min_x[fe + i] + line * 30 + 1,
+                            //                                                                0]));
+                            dataset[i].Add(elementData_min_x[fe + i] + line * 30 + 1);
+                        }
+                    }
+#if !RUNTIME
+                    CvInvoke.Line(
+                        image1,
+                        new Point(elementData_max_x[fe + i], elementData_max_y[fe + i]),
+                        new Point(elementData_max_x[fe + i], elementData_max_y[fe + i] + 20),
+                        new MCvScalar(120, 80, 210),
+                        1
+                    );
+#endif
+                }
+
+                if (layer != elementData_max_y_dist.Count - 1) { // zawsze oproc ostatniej warstwy
+                    richTextBox_sasiady.AppendText(String.Format("S{0}{1}: ", layer, layer + 1));
+
+
+
+
+                    richTextBox_sasiady.AppendText("\n");
+                }
+            }
+            richTextBox_sasiady.Text = richTextBox_sasiady.Text.Substring(0, richTextBox_sasiady.Text.Length - 1); //deleate last '\n'
         }
 
         private void button_detectCorners_Click(object sender, EventArgs e) {
@@ -318,6 +420,7 @@ namespace final_projekt_sw_jmskmo {
             }
 
             for (int i = 0; i < elements; i++) {
+#if !RUNTIME
                 CvInvoke.Circle(image1, new Point(elementData_min_x[i], elementData_min_y[i]), 5, new MCvScalar(255, 255, 0));
                 CvInvoke.Circle(image1, new Point(elementData_max_x[i], elementData_max_y[i]), 5, new MCvScalar(255, 255, 0));
 
@@ -325,15 +428,16 @@ namespace final_projekt_sw_jmskmo {
                 CvInvoke.PutText(
                     image1,
                     String.Format("E:{0}", i),
-                    new Point((elementData_min_x[i]+ elementData_max_x[i])/2, (elementData_min_y[i]+ elementData_max_y[i])/2),
+                    new Point((elementData_min_x[i] + elementData_max_x[i]) / 2, (elementData_min_y[i] + elementData_max_y[i]) / 2),
                     Emgu.CV.CvEnum.FontFace.HersheyDuplex,
                     1,
                     new MCvScalar(0, 255, 255),
                     1
                 );
+#endif
             }
 
-            //Wypełlnienie textboksu po środku
+            //Wypellnienie textboksow
             showData();
 
             showInfo();
@@ -343,11 +447,6 @@ namespace final_projekt_sw_jmskmo {
 
         private void pictureBox_main_MouseMove(object sender, MouseEventArgs e) {
             if (custom_image_selected && allow_pointer_lines && updateColorInt) {
-                //pictureBox_main.Image = null;
-                //linedImage = new Image<Bgr, byte>(800, 600);
-                //CvInvoke.Line(linedImage, new Point(e.X, 0), new Point(e.X, pictureBox_main.Height), new MCvScalar(0, 255, 189), 1);
-                //CvInvoke.Line(linedImage, new Point(0, e.Y), new Point(pictureBox_main.Width, e.Y), new MCvScalar(0, 255, 189), 1);
-
                 updateColorNumericalInputs(e.X, e.Y);
 
                 label_position.Text = String.Format("X: {0}, Y: {1}", e.X, e.Y);
@@ -355,8 +454,6 @@ namespace final_projekt_sw_jmskmo {
                 label_position.Visible = true;
                 label_position.Parent = pictureBox_main;
                 label_position.BackColor = System.Drawing.Color.Transparent;
-
-                //pictureBox_main.Image = linedImage.ToBitmap();
             } else {
                 label_position.Visible = false;
             }
