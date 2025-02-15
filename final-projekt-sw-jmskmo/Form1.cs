@@ -6,7 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Net.Mail;
 using System.Windows.Forms;
+using ZedGraph;
 
 namespace final_projekt_sw_jmskmo {
     public partial class Form1 : Form {
@@ -15,8 +17,8 @@ namespace final_projekt_sw_jmskmo {
         bool updateColorInt = false;
         int elements = 0;
         byte tone = 0;
-        int a = 0, s = 0, aa = 0, fe = 0;
-        int dlugosc = 0, dlugosc_dyskr = 0;
+        int a = 0, s = 0, fe = 0;
+        int dlugosc = 0;
         double gupSize = 0.0;
         Image<Bgr, byte> image1, linedImage;
         Image<Bgr, byte> originalImage;
@@ -192,7 +194,7 @@ namespace final_projekt_sw_jmskmo {
             pictureBox_main.Image = image1.Bitmap;
         }
 
-        int[] w_number = { 0, 0, 0, 0, 0, 0, 0 }; //!Max layer count: 7
+        int[] w_number = { 0, 0, 0, 0, 0, 0, 0 }; //CAUTION: Max layer count: 7
         private void showData() {
             richTextBox_data.Clear();
             richTextBox_data.Text = string.Empty;
@@ -250,7 +252,21 @@ namespace final_projekt_sw_jmskmo {
             }
         }
 
-        private void showInfo() {
+        private int dlugoscZidElementu(int id) {
+            int diagonal = (int)Math.Floor(Math.Sqrt(
+                    Math.Pow((elementData_max_x[id] - elementData_min_x[id]), 2) +
+                    Math.Pow((elementData_max_y[id] - elementData_min_y[id]), 2
+                    )));
+
+            if (diagonal > 0 && diagonal < 175) { return 1; }
+            else if (diagonal > 176 && diagonal < 250) { return 2; }
+            else if (diagonal > 251) { return 3; }
+            else return 0;
+        }
+
+
+        private void showInfo()
+        {
             richTextBox_info.Clear();
             richTextBox_info.Text = string.Empty;
 
@@ -263,7 +279,8 @@ namespace final_projekt_sw_jmskmo {
             byte[,,] temp_data;
             temp_data = image1.Data;
 
-            for (int i = 0; i < elements; i++) { //for every element
+            for (int i = 0; i < elements; i++)
+            { //for every element
                 element_size.Add(Math.Sqrt(
                     Math.Pow((elementData_max_x[i] - elementData_min_x[i]), 2) +
                     Math.Pow((elementData_max_y[i] - elementData_min_y[i]), 2)
@@ -271,13 +288,17 @@ namespace final_projekt_sw_jmskmo {
                 richTextBox_info.AppendText(String.Format("Size of {0} elem: {1}\n", i, (int)element_size[i]));
             }
 
-            for (int layer = 0; layer < elementData_max_y_dist.Count; layer++) {
-                if (w_number[layer] > 1) { //layer with 2 or more elements
+            for (int layer = 0; layer < elementData_max_y_dist.Count; layer++)
+            {
+                if (w_number[layer] > 1)
+                { //layer with 2 or more elements
                     a = firstElementOfLayer(layer);
-                    for (int i = 0; i < w_number[layer] - 1; i++) {
+                    for (int i = 0; i < w_number[layer] - 1; i++)
+                    {
                         gupSize = Math.Sqrt(Math.Pow((elementData_max_x[a + i] - elementData_min_x[a + i + 1]), 2) + Math.Pow((elementData_max_y[a + i] - elementData_min_y[a + i + 1]), 2));
 #if !RUNTIME
-                        if (gupSize >= 80) {
+                        if (gupSize >= 80)
+                        {
                             CvInvoke.PutText(
                                 image1,
                                 String.Format("g:{0}", (int)gupSize),
@@ -305,14 +326,16 @@ namespace final_projekt_sw_jmskmo {
                 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 richTextBox_main.AppendText(String.Format("W{0}: (", layer));
                 s = firstElementOfLayer(layer);
-                for (int i = 0; i < w_number[layer] - 1; i++) {
+                for (int i = 0; i < w_number[layer] - 1; i++)
+                {
                     //--------------------- K bez ostatniego
                     richTextBox_main.AppendText("K");
                     dlugosc = elementData_max_x[s + i] - elementData_min_x[s + i];
                     richTextBox_main.AppendText(String.Format("{0},", descretize(dlugosc)));
                     //--------------------- P
                     gupSize = Math.Sqrt(Math.Pow((elementData_max_x[s + i] - elementData_min_x[s + i + 1]), 2) + Math.Pow((elementData_max_y[s + i] - elementData_min_y[s + i + 1]), 2));
-                    if (gupSize >= 100) {
+                    if (gupSize >= 100)
+                    {
                         richTextBox_main.AppendText("P,");
                     }
                 }
@@ -330,21 +353,39 @@ namespace final_projekt_sw_jmskmo {
             //                                              SASIADSTWO ELEMENTOW                                           //
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            //Image<Bgr, byte> swap = new Image<Bgr, byte>(800, 600);
-            //swap = image1;
-            //temp_data = swap.Data;
+            Image<Bgr, byte> swap = new Image<Bgr, byte>(800, 600);
+            swap = image1;
+            temp_data = swap.Data;
             //List<int> element_temp = new List<int>();
-            List<int> naibour_temp = new List<int>();
+            //List<int> naibour_temp = new List<int>();
             //elementNaibour en = new elementNaibour();
+            List<List<int>> dataset = new List<List<int>>();
 
+            // Tworzenie drewa zawierającego podelementy dla każdego elementu
+            for (int el = 0; el < elements; el++)
+            {
+                dataset.Add(new List<int>());
+            } // Teraz dataset[n] ma listę elementów sąsiednich
 
+            /* Przykład:
+                Liczba elementów: 6 (piramida zwykła)
 
-            // program zadziala tylko jesli masz 32 Gb RAM
-            List<int>[] dataset = { new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), };
+                                1
 
-            //for (int layer = 0; layer < 2; layer++) {
-            //    dataset[layer].Add('1');
-            //}
+                            2       3
+
+                        4       5       6
+
+                // idąc od pierwszego elementu (z góry piramidy)
+                dataset = [
+                    [2, 3], // dotyczy elementu id=1
+                    [4, 5], // dotyczy elementu id=2
+                    [5, 6], // dotyczy elementu id=3
+                    [],     // dotyczy elementu id=4
+                    [],     // dotyczy elementu id=5
+                    [],     // dotyczy elementu id=6
+                ]
+            */
 
             for (int layer = 0; layer < elementData_max_y_dist.Count; layer++) {
                 fe = firstElementOfLayer(layer);
@@ -355,15 +396,17 @@ namespace final_projekt_sw_jmskmo {
                             CvInvoke.Line(
                                 image1,
                                 new Point(elementData_min_x[fe + i] + line * 30, elementData_max_y[fe + i]),
-                                new Point(elementData_min_x[fe + i] + line * 30, elementData_max_y[fe + i] + 20),
+                                new Point(elementData_min_x[fe + i] + line * 30, elementData_max_y[fe + i] + 20), //! probe point (y+1)
                                 new MCvScalar(120, 80, 210),
                                 1
                             );
 #endif
-                            //richTextBox_sasiady.AppendText(String.Format("_{0}-", temp_data[elementData_max_y[fe + i],
-                            //                                                                elementData_min_x[fe + i] + line * 30 + 1,
-                            //                                                                0]));
-                            dataset[i].Add(elementData_min_x[fe + i] + line * 30 + 1);
+                            for (int corItem = 0; corItem < elements; corItem++) {
+                                if (temp_data[elementData_max_y[fe + i] + 21, elementData_min_x[fe + i] + line * 30, 0] == corItem) {
+                                    dataset[fe + i].Add(corItem);
+                                    //Console.WriteLine(String.Format("i: {0}, el: {1}\n", i, corItem));
+                                }
+                            }
                         }
                     }
 #if !RUNTIME
@@ -374,18 +417,40 @@ namespace final_projekt_sw_jmskmo {
                         new MCvScalar(120, 80, 210),
                         1
                     );
+
+                    for (int corItem = 0; corItem < elements; corItem++) {
+                        if (temp_data[elementData_max_y[fe + i] + 21, elementData_max_x[fe + i], 0] == corItem) {
+                            dataset[fe + i].Add(corItem);
+                            //Console.WriteLine(String.Format("i: {0}, el: {1}\n", i, corItem));
+                        }
+                    }
 #endif
                 }
-
-                if (layer != elementData_max_y_dist.Count - 1) { // zawsze oproc ostatniej warstwy
-                    richTextBox_sasiady.AppendText(String.Format("S{0}{1}: ", layer, layer + 1));
-
-
-
-
-                    richTextBox_sasiady.AppendText("\n");
-                }
             }
+
+            for (int el = 0; el < elements; el++) {
+                dataset[el] = dataset[el].Distinct().ToList();
+            }
+
+            // Show neibout elements in second tab
+            // For every layer
+            for (int layer = 0; layer < elementData_max_y_dist.Count - 1; layer++) {
+                richTextBox_sasiady.AppendText(String.Format("S{0}{1}: ", layer, layer + 1));
+
+                fe = firstElementOfLayer(layer);
+                for (int i = 0; i < w_number[layer]; i++) { // dla kazdego elementu z danej warstwy
+                    for (int j = 0; j < dataset[fe + i].Count; j++) {
+                        richTextBox_sasiady.AppendText(String.Format(
+                            "(K{0},K{1}) ",
+                            dlugoscZidElementu(fe + i),
+                            dlugoscZidElementu(dataset[fe + i][j])
+                            ));
+                    }
+                }
+                richTextBox_sasiady.Text = richTextBox_sasiady.Text.Substring(0, richTextBox_sasiady.Text.Length - 1);
+                richTextBox_sasiady.AppendText(")\n");
+            }
+
             richTextBox_sasiady.Text = richTextBox_sasiady.Text.Substring(0, richTextBox_sasiady.Text.Length - 1); //deleate last '\n'
         }
 
